@@ -89,3 +89,70 @@ Nach dem Oeffnen und dem Content Enablen erhalten wir die 2. Session. Die erste 
 
 
 ![works1](ue1/pics/works-final.png)
+
+
+## Aufgabe 4
+
+Nachdem man sich mit dem FH-VPN Verbunden hat, kann man sich mit der Zieladresse verbinden. Der Broswer zeigt kurz die Webseite an gibt dann aber ein "Verbindung unterbrochen". Mit ncat kann man sich verbinden, aber nach dem Eingeben eines Accounts passiert nichts. Daher wird erstmal die IP-Gescanned um Informationen zum darunterliegenden System zu erhalten.
+
+![initscan](ue4/pics/initScan.png)
+
+Hierzu wurde aufgrund der Windows Testumgebung Zenmap benutzt. Als Flags sind die Standard "-sV" zum finden der offenen Ports und "-O" zur OS-Detection uebergeben.
+
+Das Ergbnis zeigt und den http-Service und einen offenen SSH-Port.
+
+Das System basiert anscheinend auf Debian Stretch.
+
+![os](ue4/pics/OSsha.png)
+
+
+Nachdem es auf den ersten Blick keine interessante Schwachstelle gibt wurden die gelieferten "USB-Stick Files" untersucht.
+
+"strings" verraet, dass das Binary mit GLIBC 2.0 compiliert worden ist und es gibt uns auch schon die Verfuegbaren Funktionen zurueck.
+
+Ein Ausfuehren der Binary ist erfolglos, da eine library Fehlt. 
+
+### Binary Compile
+
+Da die fehlende Library eine Customlibrary ist, kann diese nicht einfach installiert werden. Die Vermutung legt nahe, dass einige der zuvor gesehenen Funktionen in dieser definiert sind. Um herauszufinden welche genau benoetigt werden wird eine leere library erstellt und mit gcc compiliert.
+
+Wie erwartet werden uns fehlende Funktionsdefinitionen angezeigt
+
+![missingFunctions](ue4/pics/missingFunctions.png)
+
+Die Library wird mit prototypen gefuellt. Nach einem erneutem Kompilieren werden die refrenzen erkannt, aber die implementierung Fehlt. 
+
+![missingFunctions](ue4/pics/undefinedFunc.png)
+
+Um nun erfolgreich compilieren zu koennen muss die Notwendige libinetsec.o erstellt werden. Diese wird mit den Funktionen befuellt, wobei die Funktionen keine Funktion haben.
+
+	#include "libinetsec.h"
+
+	void init_canary(byte *canary, char *user, char *pass){}
+
+	book check_canary(byt *canary1, byte *canary2){return 1;}
+
+	int auth_user(char *user, char * pass){return 1;}
+
+	book check_user(char *user, char *pass){return 1;}
+
+Es wird erneut Kompiliert. hierzu wurde nach einigen errors ohne Flags, das GCC Manual und Dr.Google befragt. 
+
+Folgende parameter wurden zum kompilieren verwendet:
+
+-fPIC : Position Independet Code (benoetigt fuer die Sharded-Library
+
+-shared : um eine Shared Library zu erstellen. 
+
+Der ganze Befehl wurde so ausgefuehrt:
+
+	$ gcc -c -fPIC -o libinetsec.o libinetsec.c
+	$ gcc -shared -o libinetsec.so libinetsec.o
+
+Beim Versuch das pokerROP binary nun auszufuehren kam folgende Fehlermeldung.
+
+	./pokerROP: error while loading shared libraries: libinetsec.so: wrong ELF class: ELFCLAS
+
+Dies wies auf eine falsche Architektur der kompilierten binary hin. Es musste sowohl die gcc-Multilib zum Crosscompilen nachinstalliert, als auch das "-m32" Flag beim Kompiliervorgang hinzugefuegt werden um erfolgreich auf einem x64 System eine x86 Binary zu kompilieren.
+
+Leider beendete sich die Binary sofort mit einem Segmentation fault.

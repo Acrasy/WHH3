@@ -114,6 +114,7 @@ Lediglich "add tournament" scheint wie erwartet zu funktionieren und schneidet s
 
 ![secondTry](ue4/pics/secondTry.png)
 
+
 Die einzelnen Eingabefelder wurden mit massenhaft "a's" befuellt um um Fehlverhalten zu erzeugen. Und siehe da. Change Username stuerzt nicht mehr ab, sondern gibt eine Warnung wieder.
 
 ![thirdTry](ue4/pics/thirdTry.png)
@@ -168,3 +169,33 @@ Beim Versuch das pokerROP binary nun auszufuehren kam folgende Fehlermeldung.
 Dies wies auf eine falsche Architektur der kompilierten binary hin. Es musste sowohl die gcc-Multilib zum Crosscompilen nachinstalliert, als auch das "-m32" Flag beim Kompiliervorgang hinzugefuegt werden um erfolgreich auf einem x64 System eine x86 Binary zu kompilieren.
 
 Leider beendete sich die Binary sofort mit einem Segmentation fault.
+
+Vor dem erfolgreichen Kompilieren der pokerROP.c mussten zuvor ein paar Fehler im C-Code ausgebessert werden. Auch mussten die zuvor erstellen Funktionen in der Header-Datei angepasst werden, um den erwarteten Werten im Programm zu entsprechen.
+
+Nach viel zu langem troubelshooting, und dem wiederholen der kompletten Arbeitsschritten in 2 verschiedenen neu aufgesetzten VM's, konnte das Binary gestartet werden.
+
+### Suche nach potentiel ausnutzbaren Vulnerabilities
+
+Erste Versuche sich am Binary einzuloggen waren erfolglos aufgrund eines Berechtigungsfehlers. Das Binary , und somit der Server der Applikation, musste mit erhoehten Berechtigungen gesartet werden. 
+
+![finally](ue4/pics/finallyRunning.png)
+
+Anschliessend konnte sich in meinem Fall mit dem Localhost via netcat verbunden werden und nach mehreren Stunden Troubleshooting endlich mit der eigentlichen Aufgabe fortgefahren werden.
+
+Vom anzeigen der Security Warnings beim compilieren zuvor, wissen wir, dass die Funktion "list_accounts" falsch implementiert worden ist. Ein Type-Fehler gibt die Speicheradresse einer Variable an, anstatt die Variable anzuzeigen. Daher versuchen wir als erstes einen Account Anzulegen mit "AM" um diesen dann anzeigen zu lassen.
+
+![am](ue4/pics/AM.png)
+
+Wir sehen etwas dass wie eine Adresse aussieht. Unsere Vermutung duerfte sich bestaetigt haben.
+
+Wir wissen nun einerseits, dass die "update username" Funktion moeglicherweise unsauber implementiert ist, und dass wir ueber die "list  tournaments" Funktion die Memory-Adresse anzeigen koennen.
+
+Wir sehen uns also als naechstes die "update username" Funktion im Code an. 
+
+![u](ue4/pics/Uusername.png)
+
+Das Hantieren mit den unsicheren Versionen von Memorymanipulationsfunktionen fuehrt oft zu Schwachstellen im Code. In unserem Fall faellt sofort auf, dass der 3. Parameter der memcpy keine Laenge sondern einen Wert uebergibt. Korrekter weise muesste die Laenge des zu kopierenden Werts mit zB: der Laenge der variable durch 
+
+	len(username)
+	
+ beschraenkt werden.

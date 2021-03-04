@@ -105,8 +105,20 @@ Das System basiert anscheinend auf Debian Stretch.
 
 ![os](ue4/pics/OSsha.png)
 
+Ein Einloggen in der Maske erfolgte wie laut angabe mit cs19m018:cs19m018 und es war dankenderweise die Funktion "help" implementiert.
 
-Nachdem es auf den ersten Blick keine interessante Schwachstelle gibt wurden die gelieferten "USB-Stick Files" untersucht.
+![firstTry](ue4/pics/firstTry.png)
+
+Anscheinend "funktioniert" die Funktion "add Member" nicht wie erwartet, und ein "update username" bricht die Verbindung ab. 
+Lediglich "add tournament" scheint wie erwartet zu funktionieren und schneidet sogar den input nach einer gewissen laenge ab.
+
+![secondTry](ue4/pics/secondTry.png)
+
+Die einzelnen Eingabefelder wurden mit massenhaft "a's" befuellt um um Fehlverhalten zu erzeugen. Und siehe da. Change Username stuerzt nicht mehr ab, sondern gibt eine Warnung wieder.
+
+![thirdTry](ue4/pics/thirdTry.png)
+
+Nachdem ich Cookies sehr gerne hab behalten wir uns das im Hinterkopf und gehen zu den lokal gespeicherten Files des "USB-Sticks" ueber und versuchen die leckeren Cookies aus der gelieferten Binary zu bekommen um die gleiche Methode auf dem Server anzuwenden.
 
 "strings" verraet, dass das Binary mit GLIBC 2.0 compiliert worden ist und es gibt uns auch schon die Verfuegbaren Funktionen zurueck.
 

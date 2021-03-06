@@ -91,6 +91,64 @@ Nach dem Oeffnen und dem Content Enablen erhalten wir die 2. Session. Die erste 
 ![works1](ue1/pics/works-final.png)
 
 
+## Aufgabe 2
+
+Zum Einsatz kommt wie in Beispiel 1 eine 32Bit Windows 10 Instanz aus meiner KVM-Umgebung. Es wird ASLR und DEP deaktiviert um der Angabe zu entsprechen.
+
+ASLR wurde durch nullsetzen des Registry-Keys 
+
+	HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\MoveImages
+
+DEP war per default nur fuer Windows Programme und Services aktiviert, also nicht fuer unser Board_Release.exe.
+
+Eine erster Portscan nachdem ich die Applikation gestartet habe zeigt, dass auf Port 4444/tcp ein TCP-Service zur verfuegung steht. Der Port wird durch netstat, lokal ausgefuehrt, bestaetigt.
+
+Die Anwendung wurde nicht sofort ordnungsgemaess ausgefuehrt und so wurde sie mehrere male auch als Administrator neu gestartet. Schlussenldich bekam ich dann ein "HELLO FROM SERVER".
+
+![hello](ue2/pics/hello.png)
+
+Nun galt es sich mit der Applikation vertraut zu machen und nach Moeglichkeiten eines Userinputs zu suchen. Diese wurden durch "A -neuer Nachricht" und "C - Aendere Board Topic" gefunden.
+
+Board_Release.exe wird mittels Immunity Debugger gestartet, dass mann auch die Register beobachten kann.
+
+Mittels einfachen Einfuegen von Strings mit 1000 Charactern wird ueberprueft ob eines der Eingabefelder zum Herbeifuehren eines Absturzes genutzt werden kann. 
+
+Beim veraendern des Topics ( Befehl "C") stuerzt das Programm ab und man sieht eindeutig, dass EAX, ESP und ESI mit lauter 'a's und der EIP mit 0x61 (HEX fuer 'a') ueberschrieben worden sind. 
+
+![crash](ue2/pics/crash.png)
+
+Nachdem wir nun die Stelle gefunden haben, mit der wir die Register ueberschreiben koennen muessen wir die Offsets der Register herausfinden.
+
+Wir uebergen diesmal ein mit dem in Kali mitgelieferten pattern_create.rb erstelltes Pattern zur bestimmung ueber und nehmen die Werte zum Zeitpunkt des Absturzes zum ermitteln des Offsets.
+
+![crash2](ue2/pics/crash2.png)
+
+Fuer den EIP ergibt das einen Offset von 40.
+
+![offEIP](ue2/pics/offEIP.png)
+
+Weiters faellt auf, dass der ESI genau den Anfagn des Patterns wiederspiegelt. Das heisst also, dass der Wert von C in ESI  gespeichert wird, und die Laenge des Registers 235 Zeichen lang ist. 
+
+Der Stackpointer hat einen Offset von 44 und ist 200 Zeichen maximal. Dieser wird anscheinend direkt nach dem EIP ueberschrieben.
+
+Das kopieren einer grossen Anzahl an Zeichen in die Eingabefelder um das Programm zum absturz zu bringen scheint im gegensatz zu einem dedizierten Programm, dass die Anzahl der Zeichen iterativ erhoeht im ersten Moment primitiv, ist jedoch Zeit effizienter, und druch das einmalige Pattern aus dem Pattern_Create.rb ohne viel Aufwand moeglich, da es bei unserem Fuzzing nur um die Anzahl der Zeichen geht und nicht um Bad Characters oder gewisse Zeichenfolgen.
+
+Da mona.py zum Erstellen des Egghunter Coders benoetigt wird musste dieses, durch kopieren des Quellcodes on den PyCommands Folder, nachgeladen werden.
+
+Wir nehmen vorsichtshalber das Nullzeichen "0x00" aus dem zu generierenden Code aus und versuchen den Exploit ohne Suche nach weiteren Bad Characters. Falls dies nicht gelingt muss mittels Mona die Suche nach weiteren Bad characters (wie in der Vorlesung) gestartet werden.
+
+Da wir noch einen Start Jump brauchen, der in unsere NOP's reinspringt und wir unseren Code in ESI platzieren, suchen wir mit MONA nach einem "jmp esi" in unserem laufendem Prozess.
+
+	!mona jmp –r esi
+	!monafind -type instr-s "call esi"  -cpb'\x00‘
+
+Beide Befehle fanden "jmp esi" vorkommnisse. Jedoch fand der 2. Befehl wesentlich mehr, aber auch mit mehr nicht brauchbaren Ergebnissen.
+
+![firstsearch](ue2/pics/jmpESI.png)
+
+
+
+
 ## Aufgabe 4
 
 Nachdem man sich mit dem FH-VPN Verbunden hat, kann man sich mit der Zieladresse verbinden. Der Broswer zeigt kurz die Webseite an gibt dann aber ein "Verbindung unterbrochen". Mit ncat kann man sich verbinden, aber nach dem Eingeben eines Accounts passiert nichts. Daher wird erstmal die IP-Gescanned um Informationen zum darunterliegenden System zu erhalten.
@@ -199,3 +257,37 @@ Das Hantieren mit den unsicheren Versionen von Memorymanipulationsfunktionen fue
 	len(username)
 	
  beschraenkt werden.
+
+### Untersuchen der Canaries und des BO
+
+Um genauer das Verhalten zu untersuchen wurder Code in VS Code genauer untersucht.
+
+Die Prototypen in der Headerdatei wurden darauf hin erweitert.
+
+	#include "libinetsec.h"
+
+	void init_canary(byte *canary, char *pass){
+		*canary = 'A';
+	}
+
+	int check_canary(byte *canary1, char *canary2){
+		return *canary1 == *canary2;
+	}
+
+	int auth_user(char *user, char *pass){
+		return 1;
+	}
+
+	int check_usr(char *user, char *pass){
+
+		return 1;
+	}
+
+
+Als naechsten Schritt wird eine lange Zeichenfolge an das Programm als Wert fuer die Funktion "update username" geschickt, um zu sehen an welcher Stelle die Register ueberschrieben werden. Um auch zu sehen an welcher Stelle sich die Register befinden wurde auch gleich ein eindeutiges Pattern mit dem in Kali enthaltenen "pattern_create.rb" erstellt und dieses der Funktion uebergeben.
+
+Um das Debugging vorzunehmen wurde edb verwendet. Hier muss man einfach den Prozess starten und in den Debugger attachen.
+
+![attach](ue4/pics/attach.png)
+
+Leider gab es erhebliche schwierigkeiten mit der Toolchain und inkompatibilitaeten zwischen Architekturversionen der benutzen Programme. Und so ist leider sehr viel Zeit nur zum Troubleshooting drauf gegangen.

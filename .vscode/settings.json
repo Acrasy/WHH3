@@ -1,4 +1,6 @@
 {
-	"python.linting.pylintEnabled": true,
-	"python.linting.enabled": true
+	"python.linting.pylintEnabled": false,
+	"python.linting.enabled": true,
+	"markdown-pdf.headerTemplate": "<div style=\"font-size: 9px; margin-left: 1cm;\"> <span class='string'>Simon Rommer cs19m018</span></div>",
+	"python.linting.flake8Enabled": true,
 }

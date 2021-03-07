@@ -41,9 +41,6 @@ Anscheinend muss die Payload hier besser codiert werden. Um die Payload besser z
 
 Hier faellt sofort auf, dass "Workbook_Open()" nicht in Word implementiert ist. 
 
-### Undokumentiertes Innuendo
-
-Die Methode der aus der Volesung wird anscheinend vom Windows Defender sofort erkannt.
 
 ### Versuch mit Excel
 
@@ -51,7 +48,7 @@ Der Plan ist mit dem Tool "EXCELentDonut" [^1] eine hidden Payload in Excel zu v
 
 [^1]: https://github.com/FortyNorthSecurity/EXCELntDonut
 
-Das Template verwendet Process Injection um die Payload auszufuehren.
+Das Template verwendet Process Injection um die Payload auszufuehren. Hierbei konvergiert das Tool lediglich einen C# Code in quasi Excel Makro Format. 
 
 ![excelPayload](ue1/pics/excelPayload.png)
 
@@ -77,9 +74,9 @@ Als ersters wird die Zelle A1 im Macro Sheet auf "AutoOpen" umbenannt. Das hat d
 
 Da dies eine Spear-Phishing Kampagne simuliert, wird hier davon ausgegangen, dass durch OSINT-Methoden Informationen ueber das Berufs- und Privatleben der Zielperson erlangt worden sind.
 
-Laut LinkedIn und einigen Posts auf Social Media ist die Zielperson daran sich mit einem Berufsbegleitendem Studium am Technikum Wien Ihr Wissen zu erweitern. Daher wird auf die Zielperson angepasst eine Phishing-Mail mit dem Titel: " Streng Vertraulich: Jaehrliche Abrechnung zum Unkostenbeitrag" geschickt, welche das zuvor praeparierte Excel File angehaengt hat.
+Laut LinkedIn und einigen Posts auf Social Media ist die Zielperson daran, sich mit einem Berufsbegleitendem Studium am Technikum Wien, ihr Wissen zu erweitern. Daher wird auf die Zielperson angepasst eine Phishing-Mail mit dem Titel: " Streng Vertraulich: Jaehrliche Abrechnung zum Unkostenbeitrag" geschickt, welche das zuvor praeparierte Excel File angehaengt hat.
 
-Das Ziel bekommt nun folgende OBerflaeche nach dem Oeffnen des Documents.
+Das Ziel bekommt nun folgende Oberflaeche nach dem Oeffnen des Dokuments.
 
 ![ENABLE](ue1/pics/enableContent.png)
 
@@ -93,7 +90,23 @@ Nach dem Oeffnen und dem Content Enablen erhalten wir die 2. Session. Die erste 
 
 ## Aufgabe 2
 
-Zum Einsatz kommt wie in Beispiel 1 eine 32Bit Windows 10 Instanz aus meiner KVM-Umgebung. Es wird ASLR und DEP deaktiviert um der Angabe zu entsprechen.
+Nachdem die Social Engineering Kampagne ein voller Erfolg war und es Ihrem Team gelungen ist
+Ncat.exe zur Ausführung zu bringen kam Ihr Kollege aus der Schulungs- und Weiterbildungsabteilung mit
+einer Bitte zu Ihnen. Dort wurde für ein externes Schulungs- und Ausbildungsprogramm eine Anwendung
+erstellt, die bewusst Vulnerabilities beinhaltet. Man ersucht Sie nun diese Anwendung zu testen und
+exploiten, um eine Einschätzung zu bekommen wie herausfordernd die Aufgabe für die
+Schulungsteilnehmer sei. Wichtig sei, erklärt man Ihnen, dass Sie, sofern Sie in der Lage sind die
+Anwendung zu hacken unbedingt dies mittels eines Egghunter Exploits machen sollen, egal ob es auch
+andere Lösungen gäbe, da die Schulung eben dieses Thema behandelt.
+Auf Ihre Nachfrage, welche Schulungsrechner verwendet werden meinte der Kollege, es soll ja nicht zu
+anspruchsvoll sein also 32 Bit Rechner mit deaktivierter DEP und ASLR.
+Mit den Worten „endlich wieder ein Zero day“ machen Sie sich sogleich ans Werk.
+
+### Interpretation der Aufgabenstellung
+
+Es soll Board_Release.exe mittels einem Bufferoverflow benutzt werden um einen PoC zu erstellen. Als dediziertes Werkzeug ist Egghunter vorgeschrieben, und die Zielumgebung soll Windows mit deaktiviertem DEP und ASLR sein.
+
+### Vorbereitungen
 
 ASLR wurde durch nullsetzen des Registry-Keys 
 
@@ -106,6 +119,8 @@ Eine erster Portscan nachdem ich die Applikation gestartet habe zeigt, dass auf 
 Die Anwendung wurde nicht sofort ordnungsgemaess ausgefuehrt und so wurde sie mehrere male auch als Administrator neu gestartet. Schlussenldich bekam ich dann ein "HELLO FROM SERVER".
 
 ![hello](ue2/pics/hello.png)
+
+### Applikation und suchen des Overflows
 
 Nun galt es sich mit der Applikation vertraut zu machen und nach Moeglichkeiten eines Userinputs zu suchen. Diese wurden durch "A -neuer Nachricht" und "C - Aendere Board Topic" gefunden.
 
@@ -131,7 +146,11 @@ Weiters faellt auf, dass der ESI genau den Anfagn des Patterns wiederspiegelt. D
 
 Der Stackpointer hat einen Offset von 44 und ist 200 Zeichen maximal. Dieser wird anscheinend direkt nach dem EIP ueberschrieben.
 
+### Disclaimer
+
 Das kopieren einer grossen Anzahl an Zeichen in die Eingabefelder um das Programm zum absturz zu bringen scheint im gegensatz zu einem dedizierten Programm, dass die Anzahl der Zeichen iterativ erhoeht im ersten Moment primitiv, ist jedoch Zeit effizienter, und druch das einmalige Pattern aus dem Pattern_Create.rb ohne viel Aufwand moeglich, da es bei unserem Fuzzing nur um die Anzahl der Zeichen geht und nicht um Bad Characters oder gewisse Zeichenfolgen.
+
+### Exploiting 
 
 Da mona.py zum Erstellen des Egghunter Coders benoetigt wird musste dieses, durch kopieren des Quellcodes on den PyCommands Folder, nachgeladen werden.
 
@@ -139,12 +158,12 @@ Wir nehmen vorsichtshalber das Nullzeichen "0x00" aus dem zu generierenden Code 
 
 Da wir noch einen Start Jump brauchen, der in unsere NOP's reinspringt und wir unseren Code in ESI platzieren, suchen wir mit MONA nach einem "jmp esi" in unserem laufendem Prozess.
 
-	!mona jmp –r esi
-	!mona find -type instr -s "jmp esi" -cpb'\x00‘
+	!mona jmp –r esp
+	!mona find -type instr -s "jmp esp" -cpb '\x00‘
 
-Beide Befehle fanden "jmp esi" vorkommnisse. Jedoch fand der 2. Befehl auch die Speicheradressen und nicht nur die Files. 
+Beide Befehle fanden "jmp esp" vorkommnisse. Jedoch fand der 2. Befehl auch die Speicheradressen und nicht nur die Files. 
 
-![firstsearch](ue2/pics/jmpESI.png)
+![firstsearch](ue2/pics/jmpESP.png)
 
 
 
@@ -157,7 +176,7 @@ Der Schlussendliche Code Sieht wie folgt aus:
 
 ![code](ue2/pics/code.png
 
-Eine schwierigkeit bestand noch darin den Jump richtig hinzubekommen und eine Passende Adresse fuer den "jmp esi" zu finden.
+Eine schwierigkeit bestand noch darin den Jump richtig hinzubekommen und eine Passende Adresse fuer den "jmp esp" zu finden.
 
 ![done](ue2/pics/done.png
 

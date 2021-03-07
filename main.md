@@ -5,6 +5,7 @@
 	- [Erste Versuche](#erste-versuche)
 	- [Versuch mit Excel](#versuch-mit-excel)
 	- [Making it Stealthy](#making-it-stealthy)
+- [Aufgabe 1 die Zweite...diesmal mit richtiger Shell](#aufgabe-1-die-zweitediesmal-mit-richtiger-shell)
 - [Aufgabe 2](#aufgabe-2)
 	- [Interpretation der Aufgabenstellung](#interpretation-der-aufgabenstellung-1)
 	- [Vorbereitungen](#vorbereitungen)
@@ -83,7 +84,7 @@ Nachdem der Fehler mit der Payload fuer die Falsche Architektur (x64 vs x86) beh
 
 ### Making it Stealthy
 
-Da wir nun Wissen, dass unsere Prosess Injcetion funktioniert, muessen wir nun das Excel Wokrbookt "herrichten"
+Da wir nun Wissen, dass unsere Prosess Injcetion funktioniert, muessen wir nun das Excel Workbook "herrichten".
 
 Als ersters wird die Zelle A1 im Macro Sheet auf "AutoOpen" umbenannt. Das hat den gleichen Effekt wie eine AutoOpen Funktion in VBA-Macros und so wird unsere Routine beim Start ausgefuehrt. Anschliesend "Verstecken" wir das Makro Worksheet und fuellen das Sichtbare Worksheet mit Dummydaten, welche zu unserer Geschichte Passen. Es sei zu erwaehnen, dass es in Excel fuer ein Worksheet den Status "hidden" und "very hidden" geben kann. Der hidden-Status kann ueber die GUI erreicht werden, wohingegen "very hidden" nur durch aendern eines bestimmten Bytes mittels einens Hex-Editors erzielt wird.
 
@@ -101,6 +102,61 @@ Nach dem Oeffnen und dem Content Enablen erhalten wir die 2. Session. Die erste 
 
 
 ![works1](ue1/pics/works-final.png)
+
+
+## Aufgabe 1 die Zweite...diesmal mit richtiger Shell
+
+Da im ersten Beispiel eine Reverse Shell benutzt wurde, und lesen schwer ist, hier nun das erste Beispiel noch einmal.
+
+Diesmal wird die Shell so gestartet, dass das Zielsystem auf den Verbindungsversuch warten.
+
+Eine neue PAyload wird mit msfvenom generiert
+
+![paybind](ue1/pics/payBind.png)
+
+Diese wird dann in unser zuvor bekanntes Script eingebaut und wieder in ein Excel Makcro convertiert.
+
+![insertBind](ue1/pics/insertMacroBIND.png)
+
+Das funktionierte nicht weil in der Eile vergessen wurde, dass das Zielskript ein C# und kein python ist. Also hier nochmal:
+
+![insertBind](ue1/pics/insertMacroBINDsharp.png)
+
+Mit dem ExcelentDonut tool wieder daraus ein Excel Makro machen:
+
+![exceldonut](ue1/pics/excelDonut.png)
+
+Wir nehem den Output des Scripts und kopieren diesen wieder in ein Excel Worksheet welches als Macro deklariert ist. (Wie oben mit "Insert Makro") Danach machen wir aus der einen Spalte wieder 3 mit dem Excel Button "Text to Columns" und waehlen als Delimiter ";" aus.
+
+Die Bind-shell Payload von MSF-Venom funktioniert nur maessig. Deswegen wurde auf eine andere Variante geschwenkt.
+
+Es wird ein SimpleHTTP-Server mit Python ausgefuehrt und ein Excel-Makro einzeiler verwendet der PowerShell code nachlaedt und ausfuehrt.
+
+![pscode](ue1/pics/psexcel.png
+
+Der Code des nachgeladenen Files erstellt dann die Bindshell.
+
+Da die AMSI hier auch mitspielt wurde von AMSI.fail ein codesnippet generiert, welches die AMSI abstuerzen lassen, und somit "unschaedlich" machen soll.
+
+Der AMSI bypass wurde gemeinsam mit Powercat [^3] und den CLI options -v -l -p 666 -e cmd in das nachzuladende Textfile gepackt.
+
+Port 666 wurde verwendet, da dieser ein niedriger Port ist, der selten in verwendung ist, da er fuer das Computerspiel Doom aus den 90er Jahren reserviert ist.
+
+
+[^3]: https://raw.githubusercontent.com/besimorhino/powercat/
+
+![letmeinTEXT](ue1/pics/letmein.png)
+
+Powercat ist ein Powershell Framework mit verschiedenen Faehigkeiten. Die CLI Options bedeuten folgendes:
+
+	-l listen mode
+	-v verbose output
+	-p listening port
+	-e der Name des Prozesses der gestartet werden soll
+
+Nachdem das Makro nach ein paar versuchen mit neu generierten AMSI bypass Patterns funktioniert hat, musste das Excel File nur mehr wie das vorige Workbook praepariert werden. Das Makro Sheet versteckt und auf eine Seite legitimen Content.
+
+![bindshell juhe](ue1/pics/bindshelljuhe.png)
 
 
 ## Aufgabe 2

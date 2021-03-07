@@ -338,3 +338,16 @@ Um das Debugging vorzunehmen wurde edb verwendet. Hier muss man einfach den Proz
 ![attach](ue4/pics/attach.png)
 
 Leider gab es erhebliche schwierigkeiten mit der Toolchain und inkompatibilitaeten zwischen Architekturversionen der benutzen Programme. Und so ist leider sehr viel Zeit nur zum Troubleshooting drauf gegangen.
+
+Leider liessen mich diesmal meine Python Faehigkeiten im Stich.
+
+Die weitere vorgehensweise waere gewesen, herausfinden woher die geleakete Adresse kommt. Da die libc.so.6 mitgeliefert wurde liegt die Vermutung nahe, dass sich die geleakte Adresse innerhalb der Library befindet und man mit den von der C_Library mitgelieferten Funktionen eine Shell oeffnet. Eine "einfache" Anleitung dazu findet man zum Beispiel unter "Stack Buffer Overflows: Linux 3 - Bypassing DEP with ROP" [^2] .
+
+[^2]: https://reboare.github.io/bof/linux-stack-bof-3.html
+
+
+Den Befehl zum Anzeigen des Inhalts des bei der Verbindung schon Angezigten Files "cs19m018_flag.txt" wird dann mittels der Aufgebauten shell uebertragen.
+
+Falls es ein Write-Up gibt oder die Moeglichkeit eines Kurzen feedbacks zu BSP4 wuerde mich sehr stark interessieren wo mein Fehler lag und muss schweren Herzens, aufgrund der Aeusseren Umstaende nach mehreren durchgemachten Naechten das Handtuch schmeissen.
+
+Die Aufgaben 1 und 4 haben aber, trotz des Fehlenden Erfolgserlebnisses bei Aufgabe 4, viel spass gemacht!

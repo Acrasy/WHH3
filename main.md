@@ -140,14 +140,26 @@ Wir nehmen vorsichtshalber das Nullzeichen "0x00" aus dem zu generierenden Code 
 Da wir noch einen Start Jump brauchen, der in unsere NOP's reinspringt und wir unseren Code in ESI platzieren, suchen wir mit MONA nach einem "jmp esi" in unserem laufendem Prozess.
 
 	!mona jmp –r esi
-	!monafind -type instr-s "call esi"  -cpb'\x00‘
+	!mona find -type instr -s "jmp esi" -cpb'\x00‘
 
-Beide Befehle fanden "jmp esi" vorkommnisse. Jedoch fand der 2. Befehl wesentlich mehr, aber auch mit mehr nicht brauchbaren Ergebnissen.
+Beide Befehle fanden "jmp esi" vorkommnisse. Jedoch fand der 2. Befehl auch die Speicheradressen und nicht nur die Files. 
 
 ![firstsearch](ue2/pics/jmpESI.png)
 
 
 
+Wir koennen nun unsere Payloads zusammenstellen.
+Mit Mona erstellen wir den Egghunter String,welcher zu "w00tw00t" springt. Diese springt dann direkt via dem Keyword zur eigentlichen Payload, dem klassichen Calc.exe .
+
+Die eigentliche Payload kann im Message Feld platziert werden, da man dort nicht so Platzgebunden ist. 
+
+Der Schlussendliche Code Sieht wie folgt aus:
+
+![code](ue2/pics/code.png
+
+Eine schwierigkeit bestand noch darin den Jump richtig hinzubekommen und eine Passende Adresse fuer den "jmp esi" zu finden.
+
+![done](ue2/pics/done.png
 
 ## Aufgabe 4
 

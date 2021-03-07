@@ -1,5 +1,20 @@
-# Whitehat Hacking 3
-
+# Whitehat Hacking 3 <!-- omit in toc -->
+- [Aufgabe 1](#aufgabe-1)
+	- [Interpretation der Aufgabenstellung](#interpretation-der-aufgabenstellung)
+	- [Setup](#setup)
+	- [Erste Versuche](#erste-versuche)
+	- [Versuch mit Excel](#versuch-mit-excel)
+	- [Making it Stealthy](#making-it-stealthy)
+- [Aufgabe 2](#aufgabe-2)
+	- [Interpretation der Aufgabenstellung](#interpretation-der-aufgabenstellung-1)
+	- [Vorbereitungen](#vorbereitungen)
+	- [Applikation und suchen des Overflows](#applikation-und-suchen-des-overflows)
+	- [Disclaimer](#disclaimer)
+	- [Exploiting](#exploiting)
+- [Aufgabe 4](#aufgabe-4)
+	- [Binary Compile](#binary-compile)
+	- [Suche nach potentiel ausnutzbaren Vulnerabilities](#suche-nach-potentiel-ausnutzbaren-vulnerabilities)
+	- [Untersuchen der Canaries und des BO](#untersuchen-der-canaries-und-des-bo)
 
 ## Aufgabe 1 
 
@@ -165,6 +180,7 @@ Beide Befehle fanden "jmp esp" vorkommnisse. Jedoch fand der 2. Befehl auch die 
 
 ![firstsearch](ue2/pics/jmpESP.png)
 
+Da es mit "jmp esp" einige Probleme gab wurde dann als Sprung Adresse ein "call esp" gewaehlt.
 
 
 Wir koennen nun unsere Payloads zusammenstellen.
@@ -176,7 +192,7 @@ Der Schlussendliche Code Sieht wie folgt aus:
 
 ![code](ue2/pics/code.png
 
-Eine schwierigkeit bestand noch darin den Jump richtig hinzubekommen und eine Passende Adresse fuer den "jmp esp" zu finden.
+Eine schwierigkeit bestand noch darin den Jump richtig hinzubekommen und eine Passende Adresse fuer den "call esp" zu finden. Es wurden verschiedene Breakpoints in Immunity gesetzt und verschiedene CAll Befehle durchprobiert bis Schlussendlich der Calculator gepoppt ist.
 
 ![done](ue2/pics/done.png
 
